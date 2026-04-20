@@ -27,7 +27,9 @@ export function FooterCTASection() {
         <ul className="mt-4 flex flex-wrap gap-x-6 gap-y-3 text-[16px]">
           <li>
             <a
-              href="#github"
+              href="https://github.com/harryxu0824-a11y/demand-scope"
+              target="_blank"
+              rel="noopener noreferrer"
               className="inline-block text-[#1A1A1A] hover:underline"
             >
               GitHub →
@@ -35,7 +37,9 @@ export function FooterCTASection() {
           </li>
           <li>
             <a
-              href="#linkedin"
+              href="https://www.linkedin.com/in/chiheng-xu"
+              target="_blank"
+              rel="noopener noreferrer"
               className="inline-block text-[#1A1A1A] hover:underline"
             >
               LinkedIn →
@@ -43,7 +47,9 @@ export function FooterCTASection() {
           </li>
           <li>
             <a
-              href="#decisions"
+              href="https://github.com/harryxu0824-a11y/demand-scope/blob/main/DECISIONS.md"
+              target="_blank"
+              rel="noopener noreferrer"
               className="inline-block text-[#1A1A1A] hover:underline"
             >
               Design decisions →

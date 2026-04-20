@@ -163,6 +163,7 @@ export function AnalyzeFlow() {
 
   async function runReframe(desc: string) {
     setError(null);
+    setPrefillDescription(desc); // keep draft so onBack from reframed restores it
     const startedAt = Date.now();
     const entryId = `reframe_${startedAt}`;
     appendEntry({

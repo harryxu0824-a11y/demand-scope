@@ -49,7 +49,7 @@ Both CTAs (hero + footer) use `TypewriterInput`, which on Analyze:
 `AnalyzeFlow` (on `/analyze`) reads `?description=` on mount and prefills
 `DescriptionInput.initialValue`.
 
-## Placeholders to replace before launch
+## External links
 
-`#github`, `#linkedin`, `#decisions` — grep and replace with real URLs
-before deploy.
+Footer links point to the live GitHub repo, LinkedIn profile, and the
+`DECISIONS.md` file on GitHub. All three open in a new tab.
