@@ -329,6 +329,11 @@ export function AnalyzeFlow() {
       return (
         <div className="space-y-4">
           <DescriptionInput
+            // key forces remount when prefill arrives async from URL, so
+            // the internal useState initializer re-runs with the new value.
+            // This is the primary fix; the useEffect sync in DescriptionInput
+            // is belt-and-suspenders.
+            key={`desc-${prefillDescription || "empty"}`}
             onSubmit={runReframe}
             loading={false}
             initialValue={prefillDescription}

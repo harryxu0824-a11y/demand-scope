@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "./ui/Button";
 import { Card, CardDescription, CardTitle } from "./ui/Card";
 import { Textarea } from "./ui/Textarea";
@@ -19,6 +19,17 @@ export function DescriptionInput({
   initialValue = "",
 }: Props) {
   const [value, setValue] = useState(initialValue);
+  // Sync when initialValue arrives async (e.g., AnalyzeFlow reads URL param
+  // after mount). Guarded by a ref so we don't overwrite user edits if the
+  // parent's prefill state changes later.
+  const syncedRef = useRef(Boolean(initialValue));
+  useEffect(() => {
+    if (syncedRef.current) return;
+    if (initialValue) {
+      setValue(initialValue);
+      syncedRef.current = true;
+    }
+  }, [initialValue]);
   const chars = value.trim().length;
   const canSubmit = chars >= MIN && !loading;
 
