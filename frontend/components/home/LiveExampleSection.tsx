@@ -31,7 +31,7 @@ export function LiveExampleSection() {
         </h2>
         <p className="mt-3 text-[16px] text-[#666] md:text-[18px]">
           Here&apos;s what the analysis looks like when you put in an actual
-          B2B niche.
+          B2B / B2C niche.
         </p>
       </div>
 

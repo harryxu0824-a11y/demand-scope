@@ -1,5 +1,6 @@
 "use client";
 
+import { Download } from "lucide-react";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/cn";
 import { RedditIcon } from "./ui/Icons";
@@ -24,6 +25,7 @@ interface Props {
   entries: LogEntry[];
   anchorTime: number | null;
   openIds?: Set<string>;
+  onDownload?: () => void;
 }
 
 interface MobileProps extends Props {
@@ -49,9 +51,19 @@ function useTick(enabled: boolean) {
   }, [enabled]);
 }
 
-export function ReasoningLog({ entries, anchorTime, openIds }: Props) {
+export function ReasoningLog({
+  entries,
+  anchorTime,
+  openIds,
+  onDownload,
+}: Props) {
   return (
-    <LogPanel entries={entries} anchorTime={anchorTime} openIds={openIds} />
+    <LogPanel
+      entries={entries}
+      anchorTime={anchorTime}
+      openIds={openIds}
+      onDownload={onDownload}
+    />
   );
 }
 
@@ -61,6 +73,7 @@ export function ReasoningLogMobile({
   openIds,
   forceOpen,
   onForceOpenHandled,
+  onDownload,
 }: MobileProps) {
   const [open, setOpen] = useState(false);
 
@@ -136,6 +149,7 @@ export function ReasoningLogMobile({
               entries={entries}
               anchorTime={anchorTime}
               openIds={openIds}
+              onDownload={onDownload}
               embed
             />
           </div>
@@ -149,10 +163,13 @@ function LogPanel({
   entries,
   anchorTime,
   openIds,
+  onDownload,
   embed = false,
 }: Props & { embed?: boolean }) {
   const anyRunning = entries.some((e) => e.status === "running");
   useTick(anyRunning);
+
+  const canDownload = Boolean(onDownload) && entries.length > 0;
 
   return (
     <div
@@ -167,13 +184,28 @@ function LogPanel({
           embed && "border-0 px-0 pt-0",
         )}
       >
-        <h2 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted">
-          <span className="font-mono">◉</span>
-          Reasoning log
-        </h2>
-        <p className="mt-0.5 text-[11px] text-muted">
-          Every model call, streamed live.
-        </p>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h2 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted">
+              <span className="font-mono">◉</span>
+              Reasoning log
+            </h2>
+            <p className="mt-0.5 text-[11px] text-muted">
+              Every model call, streamed live.
+            </p>
+          </div>
+          {canDownload && (
+            <button
+              type="button"
+              onClick={onDownload}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded border border-border bg-bg px-2 py-1 text-[11px] font-medium text-muted transition hover:border-muted hover:text-fg"
+              aria-label="Download reasoning as markdown"
+            >
+              <Download size={12} />
+              Download reasoning
+            </button>
+          )}
+        </div>
       </div>
       {entries.length === 0 ? (
         <p className={cn("px-4 py-4 text-xs text-muted", embed && "px-0")}>

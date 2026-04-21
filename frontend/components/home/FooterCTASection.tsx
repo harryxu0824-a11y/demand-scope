@@ -22,7 +22,8 @@ export function FooterCTASection() {
           <TypewriterInput ctaLabel="Analyze" />
         </div>
         <p className="mt-8 text-[16px] text-[#555]">
-          Open source. Built with Claude. Read the design decisions on GitHub.
+          Open source, because you should be able to see what&apos;s judging
+          your idea.
         </p>
         <ul className="mt-4 flex flex-wrap gap-x-6 gap-y-3 text-[16px]">
           <li>

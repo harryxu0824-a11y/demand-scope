@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { apiPost } from "@/lib/api";
 import { cn } from "@/lib/cn";
+import { downloadFilename, generateMarkdown } from "@/lib/export-markdown";
 import { mockReport, readMockScenario } from "@/lib/mocks";
 import { streamPost } from "@/lib/sse";
 import type {
@@ -93,6 +94,29 @@ export function AnalyzeFlow() {
     const desc = new URLSearchParams(window.location.search).get("description");
     if (desc && desc.trim()) setPrefillDescription(desc.trim());
   }, []);
+
+  function downloadReasoning() {
+    const report = stage.kind === "report_shown" ? stage.report : null;
+    const inputDescription =
+      prefillDescription ||
+      (log.find((e) => e.id.startsWith("reframe") || e.id === "mock_reframe")
+        ?.input as string | undefined) ||
+      "";
+    const md = generateMarkdown({
+      entries: log,
+      report,
+      inputDescription,
+    });
+    const blob = new Blob([md], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = downloadFilename(inputDescription);
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+  }
 
   function viewRawSearch() {
     const reddit = log.find((e) => e.id.startsWith("reddit_analysis") || e.id.startsWith("mock_reddit_analysis"));
@@ -495,6 +519,7 @@ export function AnalyzeFlow() {
             entries={log}
             anchorTime={anchorRef.current}
             openIds={openLogIds}
+            onDownload={downloadReasoning}
           />
         </aside>
         <div className="min-w-0 space-y-6 pb-16 md:pb-0">
@@ -514,6 +539,7 @@ export function AnalyzeFlow() {
         openIds={openLogIds}
         forceOpen={mobileLogForceOpen}
         onForceOpenHandled={() => setMobileLogForceOpen(false)}
+        onDownload={downloadReasoning}
       />
     </>
   );
