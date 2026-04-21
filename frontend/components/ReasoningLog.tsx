@@ -198,10 +198,10 @@ function LogPanel({
             <button
               type="button"
               onClick={onDownload}
-              className="inline-flex shrink-0 items-center gap-1.5 rounded border border-border bg-bg px-2 py-1 text-[11px] font-medium text-muted transition hover:border-muted hover:text-fg"
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-3 py-1.5 font-mono text-xs font-semibold uppercase tracking-wider text-muted transition hover:bg-zinc-50 hover:text-fg"
               aria-label="Download reasoning as markdown"
             >
-              <Download size={12} />
+              <Download className="h-3.5 w-3.5" />
               Download reasoning
             </button>
           )}
