@@ -10,7 +10,7 @@ This file captures non-obvious design choices whose rationale lives outside the 
 
 **Trade-off acknowledged.** Splitting the evaluation across layers means the analyzer's first pass will never surface a structural gap, even when the evidence is visibly structural to a human reader. A critic call is always required for elevation. This adds latency and cost.
 
-**Alternative considered and rejected.** We considered narrowing the analyzer's Pydantic schema to `Literal["strong", "weak"]` to enforce the constraint at the type system level. We rejected this because it creates internal schema contradiction — `Gap.verdict` at the top level allows `structural`, while `AnalyzerOutput.gaps[].verdict` would not. We preferred a prompt-level guardrail plus a regression test (`test_analyzer_never_outputs_structural`) over a typing inconsistency that would confuse future contributors.
+**Alternative considered and rejected.** We considered narrowing the analyzer's Pydantic schema to `Literal["strong", "weak"]` to enforce the constraint at the type system level. We rejected this because it creates internal schema contradiction — `Gap.verdict` at the top level allows `structural`, while `AnalyzerOutput.gaps[].verdict` would not. We preferred a prompt-level guardrail plus an assertive comment at the schema boundary over a typing inconsistency that would confuse future contributors.
 
 ## 2. The validator exempts `structural` gaps from the anecdotal downgrade rule.
 
@@ -41,3 +41,37 @@ This file captures non-obvious design choices whose rationale lives outside the 
 **Trade-off acknowledged.** Three branches require three sets of copy, three action layouts, and additional frontend complexity. Maintenance cost is higher than a single empty state.
 
 **Alternative considered and rejected.** We considered a unified empty state with a small dropdown showing the reason. This was rejected because the reason determines the user's next action so directly that burying it in a collapsed disclosure would defeat the point. If our pipeline knows why it failed, that knowledge should be a first-class part of the UI, not a footnote.
+
+## 5. No verdict block. The verdict is already distributed across components.
+
+**Decision.** The final results page does not include a summary verdict block. There is no single sentence labeling the overall analysis as "strong signal", "mixed signal", or "weak signal".
+
+**Context.** Early UI reviews flagged the absence of closure on the results page — after reading through adequacy, diagnostic, and gaps, users were left without a clear synthesized answer. The initial plan was to add a top-of-page verdict block summarizing the analysis.
+
+**Trade-off acknowledged.** Without a verdict block, users must synthesize the conclusion from multiple components (adequacy bar, diagnostic pills, summary lede, gap labels, critic rationales). This places cognitive load on the reader.
+
+**Alternative considered and rejected.** We considered adding a conditional verdict block with three variants (Strong signal worth pursuing / Mixed signal needs more validation / Weak signal consider other sources). We rejected this for two reasons. First, every element that would populate the verdict block already exists on the page: the top pill group and the one-sentence summary below it already function as a lede. Second, a summary verdict would add a layer of product voice on top of the analysis — claiming a certainty we don't have. Our position is that verdict emerges from the evidence layout, not from a single interpretive sentence written on top of it. Instead of adding a verdict block, we increased the visual weight of the existing one-sentence summary to make its lede role explicit.
+
+## 6. Mock fixtures preserve pipeline honesty. We do not forge synthetic trace steps.
+
+**Decision.** Mock fixtures used during UI development reflect what the real pipeline would actually produce for each scenario. When a real `no_discussion` run produces a pipeline trace with certain stages reaching `done` status and others reaching `failed` or `empty`, the corresponding mock fixture carries the same stage shapes and statuses — not a homogenized "5 steps all done" template.
+
+**Context.** It would be cleaner for frontend development to always render a uniform number of trace steps regardless of actual pipeline state. Uniform mock shape simplifies UI rendering.
+
+**Trade-off acknowledged.** UI fixtures look "inconsistent" across mocks — a `no_discussion` mock's Reddit analysis stage carries empty children while a `signal_too_weak` mock's children carry rejection reasons. Developers have to handle these variations in rendering logic.
+
+**Alternative considered and rejected.** Forging uniform mock traces regardless of real pipeline behavior (e.g., always showing 5 green dots). We rejected this because the product's core claim is that reasoning is visible and honest. If our mocks lie about pipeline behavior, our development culture quietly drifts away from the claim — engineers start treating "reasoning log" as a decorative UI element rather than a faithful projection of backend state. Better to have inconsistent-looking fixtures than dishonest ones. The mock shape is the contract between backend and frontend: if the real pipeline emits N stages with certain statuses for a given scenario, the mock must mirror that shape exactly.
+
+## 7. Per-stage result caching with cascade invalidation.
+
+**Decision.** Reframer, adequacy, and final report results are cached in `useRef` keyed by the input content itself (the raw description string for reframe; JSON-serialized upstream payloads for adequacy and report).
+
+**Context.** The original implementation re-ran every stage on forward navigation, which burned API quota and made iteration painful. During demo prep especially, re-navigating to show a specific screen meant another 60+ seconds of pipeline execution. Users who went back to edit and then forward again would watch the same analysis run twice for no reason.
+
+**Trade-off acknowledged.** Cache state lives only in component memory (`useRef`). Page refresh loses it. This is intentional — we didn't want to persist potentially stale pipeline state across sessions. It also means users can't share a cached result via URL; only their live session has it.
+
+**Cascade invalidation.** If the reframe changes, adequacy and report caches are cleared. If adequacy changes, report cache is cleared. Users can never see stale output when an upstream input changed.
+
+**Alternative considered and rejected.** We considered persisting the cache in `localStorage` or on the server. Rejected for two reasons. First, persistent storage raises the question of when cache expires — we'd need to invent TTL logic or risk showing stale analyses from days ago. Second, this is a demand validation tool, not a document editor; the analysis happens once per input, and that session's cache is enough. Keep it ephemeral; keep it simple.
+
+**Why this matches the product stance.** Our thesis is that reasoning should be reusable. Re-running the same pipeline on the same input should be free — both economically (API cost) and in user time (no loading). The cache makes forward navigation feel instant when the work has already been done, and reveals loading only when real new work is required.
