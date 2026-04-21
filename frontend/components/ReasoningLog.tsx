@@ -184,28 +184,24 @@ function LogPanel({
           embed && "border-0 px-0 pt-0",
         )}
       >
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <h2 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted">
-              <span className="font-mono">◉</span>
-              Reasoning log
-            </h2>
-            <p className="mt-0.5 text-[11px] text-muted">
-              Every model call, streamed live.
-            </p>
-          </div>
-          {canDownload && (
-            <button
-              type="button"
-              onClick={onDownload}
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-3 py-1.5 font-mono text-xs font-semibold uppercase tracking-wider text-muted transition hover:bg-zinc-50 hover:text-fg"
-              aria-label="Download reasoning as markdown"
-            >
-              <Download className="h-3.5 w-3.5" />
-              Download reasoning
-            </button>
-          )}
-        </div>
+        <h2 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted">
+          <span className="font-mono">◉</span>
+          Reasoning log
+        </h2>
+        <p className="mt-0.5 text-[11px] text-muted">
+          Every model call, streamed live.
+        </p>
+        {canDownload && (
+          <button
+            type="button"
+            onClick={onDownload}
+            className="mt-3 inline-flex w-fit items-center gap-1.5 rounded-md border border-zinc-200 bg-white px-2.5 py-1 font-mono text-xs uppercase tracking-wider text-muted transition hover:bg-zinc-50 hover:text-fg"
+            aria-label="Download reasoning as markdown"
+          >
+            <Download className="h-3 w-3" />
+            Download reasoning
+          </button>
+        )}
       </div>
       {entries.length === 0 ? (
         <p className={cn("px-4 py-4 text-xs text-muted", embed && "px-0")}>
