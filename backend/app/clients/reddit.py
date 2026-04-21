@@ -30,6 +30,8 @@ class MockRedditSource:
         limit: int = 20,
     ) -> list[RedditItem]:
         scenario = _pick_scenario(keywords)
+        if scenario is None:
+            return []
         path = self.fixtures_dir / f"{scenario}.json"
         if not path.exists():
             return []
@@ -88,13 +90,13 @@ def get_reddit_source() -> RedditSource:
     return MockRedditSource()
 
 
-def _pick_scenario(keywords: list[str]) -> str:
+def _pick_scenario(keywords: list[str]) -> str | None:
     joined = " ".join(keywords).lower()
     if any(w in joined for w in ["curtain", "decor", "nursery", "baby", "wedding"]):
         return "low_adequacy_curtains"
     if any(w in joined for w in ["medical", "health", "doctor", "patient", "clinic"]):
         return "unmet_supply_patient_notes"
-    return "satisfied_note_taking"
+    return None
 
 
 def _cache_key(keywords: list[str], subs: list[str] | None, limit: int) -> str:

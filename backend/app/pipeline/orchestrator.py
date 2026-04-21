@@ -269,7 +269,7 @@ def run_reddit_analysis(
                 low_adequacy_override=override_low_adequacy,
                 empty_reason="search_mismatch",
                 empty_reason_details={
-                    "subreddits_searched": sorted({i.subreddit for i in corpus}),
+                    "subreddits_searched": plan.candidate_subreddits,
                     "posts_found": len(corpus),
                     "user_language_rephrase": reframe.user_language_rephrase,
                     "pain_hypotheses": reframe.pain_hypotheses,
