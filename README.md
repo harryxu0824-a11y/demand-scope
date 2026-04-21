@@ -31,6 +31,11 @@ The rationale behind every non-obvious choice (why the analyzer doesn't label st
 
 ## Project layout
 
+```
+backend/   FastAPI + Pydantic schemas + OpenAI-compatible LLM client (AI Builder Space gateway)
+frontend/  Next.js 14 + Tailwind + live reasoning log streamed via SSE
+```
+
 ## Pipeline
 
 | Step | Name | Needs Reddit? |
@@ -119,5 +124,5 @@ MIT
 
 ---
 
-Built by [Harry Xu](https://www.linkedin.com/in/chiheng-xu). Demo at AI Tinkerers Toronto, April 29, 2026.
+Built by [Harry Xu](https://www.linkedin.com/in/chiheng-xu). Submitted to AI Tinkerers Toronto, April 29, 2026.
 
