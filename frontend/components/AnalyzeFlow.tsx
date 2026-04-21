@@ -75,6 +75,18 @@ export function AnalyzeFlow() {
   const [prefillDescription, setPrefillDescription] = useState<string>("");
   const anchorRef = useRef<number | null>(null);
 
+  // Per-stage result cache. Going back then forward again with unchanged
+  // inputs reuses the prior result instead of re-calling the API.
+  const reframeCache = useRef<{ desc: string; reframe: Reframe } | null>(null);
+  const adequacyCache = useRef<{
+    key: string;
+    adequacy: PlatformAdequacy;
+  } | null>(null);
+  const reportCache = useRef<{
+    key: string;
+    report: DemandReportT;
+  } | null>(null);
+
   // Read ?description= from URL on mount (home page CTA → /analyze prefill).
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -164,6 +176,13 @@ export function AnalyzeFlow() {
   async function runReframe(desc: string) {
     setError(null);
     setPrefillDescription(desc); // keep draft so onBack from reframed restores it
+
+    // Cache hit: unchanged desc → skip API.
+    if (reframeCache.current?.desc === desc) {
+      setStage({ kind: "reframed", reframe: reframeCache.current.reframe });
+      return;
+    }
+
     const startedAt = Date.now();
     const entryId = `reframe_${startedAt}`;
     appendEntry({
@@ -184,6 +203,10 @@ export function AnalyzeFlow() {
         endedAt: Date.now(),
         output: reframe,
       });
+      reframeCache.current = { desc, reframe };
+      // New reframe invalidates downstream caches.
+      adequacyCache.current = null;
+      reportCache.current = null;
       setStage({ kind: "reframed", reframe });
     } catch (e) {
       const msg = String(e);
@@ -199,6 +222,17 @@ export function AnalyzeFlow() {
 
   async function confirmReframe(edited: Reframe) {
     setError(null);
+
+    const key = JSON.stringify(edited);
+    if (adequacyCache.current?.key === key) {
+      setStage({
+        kind: "adequacy_shown",
+        reframe: edited,
+        adequacy: adequacyCache.current.adequacy,
+      });
+      return;
+    }
+
     const startedAt = Date.now();
     const entryId = `adequacy_${startedAt}`;
     appendEntry({
@@ -219,6 +253,8 @@ export function AnalyzeFlow() {
         endedAt: Date.now(),
         output: adequacy,
       });
+      adequacyCache.current = { key, adequacy };
+      reportCache.current = null; // new adequacy invalidates report cache
       setStage({ kind: "adequacy_shown", reframe: edited, adequacy });
     } catch (e) {
       const msg = String(e);
@@ -238,6 +274,22 @@ export function AnalyzeFlow() {
     overrideLowAdequacy: boolean,
   ) {
     setError(null);
+
+    const reportKey = JSON.stringify({
+      r: reframe,
+      a: adequacy,
+      o: overrideLowAdequacy,
+    });
+    if (reportCache.current?.key === reportKey) {
+      setStage({
+        kind: "report_shown",
+        report: reportCache.current.report,
+        reframe,
+        adequacy,
+      });
+      return;
+    }
+
     const startedAt = Date.now();
     const entryId = `reddit_analysis_${startedAt}`;
     appendEntry({
@@ -292,6 +344,7 @@ export function AnalyzeFlow() {
               output: `${event.report.gaps.length} gaps · ${event.report.gaps.reduce((n, g) => n + g.evidence.length, 0)} quotes`,
               children: traceToChildren(event.report.trace ?? []),
             });
+            reportCache.current = { key: reportKey, report: event.report };
             setStage({
               kind: "report_shown",
               report: event.report,
