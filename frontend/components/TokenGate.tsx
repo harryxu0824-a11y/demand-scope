@@ -11,6 +11,22 @@ export function TokenGate({ children }: { children: React.ReactNode }) {
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
+    // Auto-prefill token from ?token= URL param (guest demo links).
+    // Done here atomically so there's no race with getToken() below.
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const urlToken = params.get("token");
+      if (urlToken) {
+        setToken(urlToken);
+        params.delete("token");
+        const q = params.toString();
+        const cleanUrl =
+          window.location.pathname +
+          (q ? `?${q}` : "") +
+          window.location.hash;
+        window.history.replaceState({}, "", cleanUrl);
+      }
+    }
     const t = getToken();
     if (!t) return setAuthed(false);
     apiGet("/api/me")
