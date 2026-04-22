@@ -1,4 +1,5 @@
 import { FooterCTASection } from "@/components/home/FooterCTASection";
+import { GuestTokenInit } from "@/components/GuestTokenInit";
 import { HeroSection } from "@/components/home/HeroSection";
 import { LiveExampleSection } from "@/components/home/LiveExampleSection";
 import { ManifestoSection } from "@/components/home/ManifestoSection";
@@ -6,6 +7,7 @@ import { ManifestoSection } from "@/components/home/ManifestoSection";
 export default function HomePage() {
   return (
     <main className="bg-white text-[#1A1A1A]">
+      <GuestTokenInit />
       <HeroSection />
       <div className="bg-[#FAFAFA]">
         <ManifestoSection />

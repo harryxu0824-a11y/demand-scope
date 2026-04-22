@@ -1,9 +1,11 @@
 import { AnalyzeFlow } from "@/components/AnalyzeFlow";
+import { GuestTokenInit } from "@/components/GuestTokenInit";
 import { TokenGate } from "@/components/TokenGate";
 
 export default function AnalyzePage() {
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">
+      <GuestTokenInit />
       <header className="mb-8">
         <h1 className="text-2xl font-semibold tracking-tight">Demand Scope</h1>
         <p className="mt-1 text-sm text-muted">
