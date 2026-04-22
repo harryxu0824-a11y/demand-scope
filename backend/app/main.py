@@ -68,6 +68,7 @@ def me(token: str = Depends(require_token)) -> dict[str, object]:
 @app.post("/api/reframe", response_model=Reframe)
 def reframe_endpoint(
     req: ReframeRequest,
+    request: Request,
     token: str = Depends(require_token),
 ) -> Reframe:
     desc = req.description.strip()
@@ -75,7 +76,7 @@ def reframe_endpoint(
         raise HTTPException(400, "Description too short (min 30 chars)")
     if len(desc) > settings.max_input_chars_per_analysis:
         raise HTTPException(400, "Description too long")
-    consume_quota(token)
+    consume_quota(token, request)
     try:
         return reframe(_llm, desc)
     except Exception as e:
@@ -85,9 +86,10 @@ def reframe_endpoint(
 @app.post("/api/adequacy", response_model=PlatformAdequacy)
 def adequacy_endpoint(
     req: AdequacyRequest,
+    request: Request,
     token: str = Depends(require_token),
 ) -> PlatformAdequacy:
-    consume_quota(token)
+    consume_quota(token, request)
     try:
         return assess_adequacy(_llm, req.reframe)
     except Exception as e:
@@ -97,6 +99,7 @@ def adequacy_endpoint(
 @app.post("/api/run-reddit")
 def run_reddit_endpoint(
     req: RunRedditRequest,
+    request: Request,
     token: str = Depends(require_token),
 ):
     if req.adequacy.level == "low" and not req.override_low_adequacy:
@@ -104,7 +107,7 @@ def run_reddit_endpoint(
             400,
             "Low platform adequacy requires override_low_adequacy=true",
         )
-    consume_quota(token)
+    consume_quota(token, request)
     try:
         report = run_reddit_analysis(
             _llm,
@@ -132,6 +135,7 @@ def run_reddit_endpoint(
 @app.post("/api/run-reddit/stream")
 def run_reddit_stream_endpoint(
     req: RunRedditRequest,
+    request: Request,
     token: str = Depends(require_token),
 ):
     """Streams coarse phase events via SSE, ending with the full report.
@@ -147,7 +151,7 @@ def run_reddit_stream_endpoint(
             400,
             "Low platform adequacy requires override_low_adequacy=true",
         )
-    consume_quota(token)
+    consume_quota(token, request)
 
     q: queue_mod.Queue = queue_mod.Queue()
     _SENTINEL = object()

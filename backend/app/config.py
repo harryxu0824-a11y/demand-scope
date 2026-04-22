@@ -22,6 +22,7 @@ class Settings(BaseSettings):
 
     app_access_tokens: str = ""
     daily_quota_per_token: int = 20
+    ip_daily_limit: int = 5
     max_input_chars_per_analysis: int = 40_000
 
     app_allowed_origins: str = "http://localhost:3000,http://localhost:3100"

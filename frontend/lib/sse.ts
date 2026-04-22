@@ -29,8 +29,20 @@ export async function streamPost(
     signal,
   });
   if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`${res.status} ${text}`);
+    let detail = "";
+    try {
+      const parsed = JSON.parse(await res.text());
+      detail = typeof parsed?.detail === "string" ? parsed.detail : "";
+    } catch {
+      // fall through
+    }
+    if (res.status === 429) {
+      throw new Error(
+        detail ||
+          "Daily usage limit reached. Come back tomorrow, or self-host from the GitHub repo.",
+      );
+    }
+    throw new Error(detail ? `${res.status} ${detail}` : `${res.status}`);
   }
   if (!res.body) throw new Error("response has no body");
 

@@ -23,12 +23,29 @@ export function clearToken() {
   window.localStorage.removeItem(TOKEN_KEY);
 }
 
+async function throwFriendlyError(res: Response): Promise<never> {
+  let detail = "";
+  try {
+    const body = await res.json();
+    detail = typeof body?.detail === "string" ? body.detail : "";
+  } catch {
+    detail = await res.text().catch(() => "");
+  }
+  if (res.status === 429) {
+    throw new Error(
+      detail ||
+        "Daily usage limit reached. Come back tomorrow, or self-host from the GitHub repo.",
+    );
+  }
+  throw new Error(detail ? `${res.status} ${detail}` : `${res.status}`);
+}
+
 export async function apiGet<T>(path: string): Promise<T> {
   const token = getToken();
   const res = await fetch(url(path), {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
-  if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
+  if (!res.ok) await throwFriendlyError(res);
   return res.json();
 }
 
@@ -42,6 +59,6 @@ export async function apiPost<T>(path: string, body: unknown): Promise<T> {
     },
     body: JSON.stringify(body),
   });
-  if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
+  if (!res.ok) await throwFriendlyError(res);
   return res.json();
 }

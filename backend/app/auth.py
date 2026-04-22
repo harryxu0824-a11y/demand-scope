@@ -3,7 +3,7 @@ import threading
 from datetime import date
 from pathlib import Path
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from .config import settings
@@ -17,8 +17,11 @@ def _quota_file_for(d: date) -> Path:
     return settings.cache_dir / f"quota_{d.isoformat()}.json"
 
 
-def _read_usage(d: date) -> dict[str, int]:
-    path = _quota_file_for(d)
+def _ip_quota_file_for(d: date) -> Path:
+    return settings.cache_dir / f"ip_quota_{d.isoformat()}.json"
+
+
+def _read_json_counts(path: Path) -> dict[str, int]:
     if not path.exists():
         return {}
     try:
@@ -27,11 +30,17 @@ def _read_usage(d: date) -> dict[str, int]:
         return {}
 
 
-def _write_usage(d: date, usage: dict[str, int]) -> None:
-    path = _quota_file_for(d)
+def _write_json_counts(path: Path, data: dict[str, int]) -> None:
     tmp = path.with_suffix(".json.tmp")
-    tmp.write_text(json.dumps(usage))
+    tmp.write_text(json.dumps(data))
     tmp.replace(path)
+
+
+def _client_ip(request: Request) -> str:
+    fwd = request.headers.get("x-forwarded-for")
+    if fwd:
+        return fwd.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
 
 
 def require_token(
@@ -45,15 +54,31 @@ def require_token(
     return token
 
 
-def consume_quota(token: str) -> None:
+def consume_quota(token: str, request: Request) -> None:
     today = date.today()
+    ip = _client_ip(request)
+    token_path = _quota_file_for(today)
+    ip_path = _ip_quota_file_for(today)
     with _LOCK:
-        usage = _read_usage(today)
-        current = usage.get(token, 0)
-        if current >= settings.daily_quota_per_token:
+        token_usage = _read_json_counts(token_path)
+        ip_usage = _read_json_counts(ip_path)
+
+        ip_count = ip_usage.get(ip, 0)
+        if ip_count >= settings.ip_daily_limit:
+            raise HTTPException(
+                status.HTTP_429_TOO_MANY_REQUESTS,
+                f"Daily limit ({settings.ip_daily_limit} requests) reached for your network. "
+                "Come back tomorrow, or self-host from the GitHub repo.",
+            )
+
+        token_count = token_usage.get(token, 0)
+        if token_count >= settings.daily_quota_per_token:
             raise HTTPException(
                 status.HTTP_429_TOO_MANY_REQUESTS,
                 f"Daily quota ({settings.daily_quota_per_token}) exceeded for this token",
             )
-        usage[token] = current + 1
-        _write_usage(today, usage)
+
+        token_usage[token] = token_count + 1
+        ip_usage[ip] = ip_count + 1
+        _write_json_counts(token_path, token_usage)
+        _write_json_counts(ip_path, ip_usage)
